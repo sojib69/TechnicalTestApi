@@ -6,8 +6,7 @@ using TechnicalTest.Shared.Wrapper;
 namespace TechnicalTest.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class ContactGroupsController : ControllerBase
+    public class ContactGroupsController : BaseController
     {
         #region Private Members & Constructor
         private readonly ILogger _logger;

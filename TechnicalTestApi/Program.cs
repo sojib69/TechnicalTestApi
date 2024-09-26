@@ -1,5 +1,6 @@
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
 using TechnicalTest.Api.Configurations;
 using TechnicalTest.Api.Extensions;
 using TechnicalTest.Application.Extensions;
@@ -13,16 +14,22 @@ namespace TechnicalTest.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
-                .Build();
+            var configuration = builder.Configuration;
+
+            // TODO: Need to uncommented this for authentication
+            //builder.Services.AddAuthentication()
+            //    .AddMicrosoftIdentityWebApi(configuration.GetSection("AzureAdB2c"))
+            //    .EnableTokenAcquisitionToCallDownstreamApi()
+            //    .AddInMemoryTokenCaches();
 
             // Database
-            builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.ReadApplicationConfigurations(configuration)
-                .RegisterSwagger()
-                .AddCustomCors();
+            builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.ReadApplicationConfigurations(configuration);
+
+            builder.Services.AddSwaggerGen(); // TODO: Need to remove this for authentication
+            //builder.Services.RegisterSwagger(); // TODO: Need to add this for authentication
+
+            builder.Services.AddCustomCors();
 
             // Services added from Application and Infrastructure layer
             builder.Services.AddApplicationLayer();
@@ -44,11 +51,12 @@ namespace TechnicalTest.Api
                 app.UseSwaggerUI();
             }
 
+            //app.ConfigureSwagger(configuration); // TODO: Need to uncommented this for authentication
             app.UseCors(configuration.GetSection(nameof(AppConfiguration)).GetValue<string>("CorsPolicyName") ?? string.Empty);
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
-
 
             app.MapControllers();
 

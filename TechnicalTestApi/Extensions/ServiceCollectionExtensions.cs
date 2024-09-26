@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using System.Reflection;
 using TechnicalTest.Api.Configurations;
 
 namespace TechnicalTest.Api.Extensions
@@ -10,7 +11,8 @@ namespace TechnicalTest.Api.Extensions
     {
         internal static IServiceCollection ReadApplicationConfigurations(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<AppConfiguration>(configuration.GetSection(nameof(AppConfiguration)));
+            services.Configure<AppConfiguration>(configuration.GetSection(nameof(AppConfiguration)))
+                .Configure<AzureAdB2cSetting>(configuration.GetSection("AzureAdB2c"));
             return services;
         }
 
@@ -18,18 +20,15 @@ namespace TechnicalTest.Api.Extensions
         {
             services.AddSwaggerGen(c =>
             {
-                //c.DocumentFilter<LowercaseDocumentFilter>();
-                //Refer - https://gist.github.com/rafalkasa/01d5e3b265e5aa075678e0adfd54e23f
-
                 // include all project's xml comments
-                var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
                     if (!assembly.IsDynamic)
                     {
-                        var xmlFile = $"{assembly.GetName().Name}.xml";
-                        var xmlPath = Path.Combine(baseDirectory, xmlFile);
+                        string xmlFile = $"{assembly.GetName().Name}.xml";
+                        string xmlPath = Path.Combine(baseDirectory, xmlFile);
                         if (File.Exists(xmlPath))
                         {
                             c.IncludeXmlComments(xmlPath);
@@ -40,10 +39,10 @@ namespace TechnicalTest.Api.Extensions
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Version = "v1",
-                    Title = "TechicalTest.Api's",
+                    Title = "Technical Test API(s)",
                     License = new OpenApiLicense
                     {
-                        Name = "TechicalTest",
+                        Name = "Technical Test",
                         Url = new Uri("https://opensource.org/licenses/MIT")
                     }
                 });
@@ -70,6 +69,25 @@ namespace TechnicalTest.Api.Extensions
                     BearerFormat = "JWT",
                     Scheme = JwtBearerDefaults.AuthenticationScheme
                 });
+
+                using (ServiceProvider sp = services.BuildServiceProvider())
+                {
+                    AzureAdB2cSetting azureAdSetting = sp.GetRequiredService<IOptionsSnapshot<AzureAdB2cSetting>>().Value;
+                    string signUpSignInPolicyIdSegment = $"/{azureAdSetting.SignUpSignInPolicyId}";
+                    c.AddSecurityDefinition(nameof(SecuritySchemeType.OAuth2), new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.OAuth2,
+                        Flows = new OpenApiOAuthFlows
+                        {
+                            Implicit = new OpenApiOAuthFlow()
+                            {
+                                AuthorizationUrl = new Uri(new Uri(azureAdSetting.Instance), $"{azureAdSetting.Domain}{signUpSignInPolicyIdSegment}/oauth2/v2.0/authorize"),
+                                TokenUrl = new Uri(new Uri(azureAdSetting.Instance), $"{azureAdSetting.Domain}{signUpSignInPolicyIdSegment}/oauth2/v2.0/token"),
+                                Scopes = azureAdSetting.Scopes!.Split(' ').ToDictionary(k => k, k => "Access application on user behalf")
+                            }
+                        }
+                    });
+                }
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
@@ -106,10 +124,10 @@ namespace TechnicalTest.Api.Extensions
             {
                 using ServiceProvider sp = services.BuildServiceProvider();
                 AppConfiguration appConfiguration = sp.GetRequiredService<IOptionsSnapshot<AppConfiguration>>().Value;
-                string feUrl = appConfiguration.CorsDomains;
+                string feUrl = appConfiguration.CorsDomains ?? "";
                 string[] originUrls = feUrl.Split(",");
 
-                options.AddPolicy(name: appConfiguration.CorsPolicyName,
+                options.AddPolicy(name: appConfiguration.CorsPolicyName ?? "",
                     policy =>
                     {
                         //policy.WithOrigins(originUrls)
