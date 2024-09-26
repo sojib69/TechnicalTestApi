@@ -6,7 +6,7 @@ using TechnicalTest.Shared.Wrapper;
 namespace TechnicalTest.Api.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class ContactGroupsController : ControllerBase
     {
         #region Private Members & Constructor
