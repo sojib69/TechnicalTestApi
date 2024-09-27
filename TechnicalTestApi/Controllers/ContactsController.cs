@@ -36,11 +36,11 @@ namespace TechnicalTest.Api.Controllers
             return Ok(result);
         }
 
-        [HttpDelete("DeleteContact")]
-        public async Task<IActionResult> DeleteContact([FromBody] ContactDeleteRequest request)
+        [HttpDelete("DeleteContact/{id}")]
+        public async Task<IActionResult> DeleteContact(int id)
         {
             _logger.LogInformation("Delete Contact method called");
-            var result = await _contactRepository.DeleteContact(request);
+            var result = await _contactRepository.DeleteContact(id);
             return Ok(result);
         }
 

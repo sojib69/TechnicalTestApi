@@ -70,7 +70,7 @@ namespace TechnicalTest.Infrastructure.Repositories.ContactGroups
                                 {
                                     Id = contactGroup.Id,
                                     GroupName = contactGroup.GroupName,
-                                }).OrderBy(c => c.Id).ToListAsync(cancellationToken: cancellationToken);
+                                }).OrderByDescending(c => c.Id).ToListAsync(cancellationToken: cancellationToken);
             return result;
         }
     }

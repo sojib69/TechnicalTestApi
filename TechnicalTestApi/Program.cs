@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using TechnicalTest.Api.Configurations;
 using TechnicalTest.Api.Extensions;
+using TechnicalTest.Api.Middlewares;
 using TechnicalTest.Application.Extensions;
 using TechnicalTest.Infrastructure.Contexts;
 using TechnicalTest.Infrastructure.Extensions;
@@ -50,6 +51,9 @@ namespace TechnicalTest.Api
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            // Custom error handling middleware
+            app.UseMiddleware<ErrorHandlerMiddleware>();
 
             //app.ConfigureSwagger(configuration); // TODO: Need to uncommented this for authentication
             app.UseCors(configuration.GetSection(nameof(AppConfiguration)).GetValue<string>("CorsPolicyName") ?? string.Empty);

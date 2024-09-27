@@ -62,7 +62,7 @@ namespace TechnicalTest.Infrastructure.Repositories.Contacts
                 return await Result<bool>.FailAsync(ApiMessages.Failed);
         }
 
-        public async Task<Result<bool>> DeleteContact(ContactDeleteRequest request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> DeleteContact(int id, CancellationToken cancellationToken)
         {
             _logger.LogDebug("Delete Contact");
             using var scope = _serviceProvider.CreateAsyncScope();
@@ -70,10 +70,10 @@ namespace TechnicalTest.Infrastructure.Repositories.Contacts
             var repository = unitOfWork.Repository<Contact>();
 
             // Check category type is exist or not in DB
-            var contact = await repository.Entities.AsNoTracking().Where(c => c.Id == request.Id).FirstOrDefaultAsync(cancellationToken: cancellationToken);
+            var contact = await repository.Entities.AsNoTracking().Where(c => c.Id == id).FirstOrDefaultAsync(cancellationToken: cancellationToken);
             if (contact == null)
             {
-                return await Result<bool>.FailAsync($"{ApiMessages.RecordNotFound} for this Id: {request.Id}");
+                return await Result<bool>.FailAsync($"{ApiMessages.RecordNotFound} for this Id: {id}");
             }
 
             await repository.DeleteAsync(contact);
@@ -100,7 +100,7 @@ namespace TechnicalTest.Infrastructure.Repositories.Contacts
                                     ContactType = contact.ContactType,
                                     ContactGroupId = contact.ContactGroupId,
                                     ContactGroupName = contactGroup.GroupName,
-                                }).OrderBy(c => c.Id).ToListAsync(cancellationToken: cancellationToken);
+                                }).OrderByDescending(c => c.Id).ToListAsync(cancellationToken: cancellationToken);
             return result;
         }
 

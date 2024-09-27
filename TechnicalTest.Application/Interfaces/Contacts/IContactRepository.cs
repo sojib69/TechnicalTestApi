@@ -9,7 +9,7 @@ namespace TechnicalTest.Application.Interfaces.Contacts
 
         Task<Result<bool>> EditContact(ContactEditRequest request, CancellationToken cancellationToken = default);
 
-        Task<Result<bool>> DeleteContact(ContactDeleteRequest request, CancellationToken cancellationToken = default);
+        Task<Result<bool>> DeleteContact(int id, CancellationToken cancellationToken = default);
 
         Task<List<ContactGetResponse>> GetAllContacts(CancellationToken cancellationToken = default);
 
